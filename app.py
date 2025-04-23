@@ -77,6 +77,8 @@ if mode == "Tampilan Publik":
             color: #34495E;
             margin-top: 2rem;
             font-weight: 600;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 0.2rem;
         }
 
         @media (min-width: 768px) {
@@ -111,7 +113,7 @@ if mode == "Tampilan Publik":
 
     # Foto Profil
     if os.path.getsize("profile_photo.jpg") > 0:
-        st.image("profile_photo.jpg", caption="Foto Profil", use_container_width=True)
+        st.image("profile_photo.jpg", caption="Foto Profil", use_column_width=True)
     else:
         st.write("Foto belum diunggah")
 
@@ -120,7 +122,7 @@ if mode == "Tampilan Publik":
     st.markdown(f"<div class='custom-desc'>{data['profile'].get('deskripsi', 'Deskripsi belum diisi')}</div>", unsafe_allow_html=True)
 
     # Keahlian
-    st.markdown("<div class='section-title'>Keahlian</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>🛠 Keahlian</div>", unsafe_allow_html=True)
     for skill in data["skills"]:
         if ":" in skill:
             nama, nilai = skill.split(":")
@@ -133,12 +135,12 @@ if mode == "Tampilan Publik":
             st.write(skill)
 
     # Pengalaman
-    st.markdown("<div class='section-title'>Pengalaman</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>💼 Pengalaman</div>", unsafe_allow_html=True)
     for exp in data["pengalaman"]:
         st.markdown(f"<div class='pengalaman-text'><strong>{exp['judul']} ({exp['tahun']})</strong><br>{exp['deskripsi']}</div>", unsafe_allow_html=True)
 
     # Portofolio Proyek
-    st.markdown("<div class='section-title'>Portofolio Proyek</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>📁 Portofolio Proyek</div>", unsafe_allow_html=True)
     for proj in data.get("projects", []):
         st.image(proj["gambar"], use_column_width=True)
         st.markdown(f"<div class='pengalaman-text'><strong>{proj['judul']} ({proj['tahun']})</strong></div>", unsafe_allow_html=True)
@@ -147,7 +149,7 @@ if mode == "Tampilan Publik":
             st.markdown(f"[Lihat Proyek]({proj['link']})", unsafe_allow_html=True)
 
     # Kontak
-    st.markdown("<div class='section-title'>Hubungi Saya</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>📞 Hubungi Saya</div>", unsafe_allow_html=True)
     st.markdown("<div class='hubungi'><a href='https://wa.me/6287810059643' target='_blank'>WhatsApp</a></div>", unsafe_allow_html=True)
 
 # Mode Admin / Edit
