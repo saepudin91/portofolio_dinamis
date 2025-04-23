@@ -180,7 +180,6 @@ elif mode == "Edit (Admin)":
         st.warning("Masukkan password untuk mengakses mode edit.")
         st.stop()
 
-    # Data Profil
     with st.expander("Profil dan Identitas", expanded=True):
         nama = st.text_input("Nama", value=data["profile"].get("nama", ""))
         deskripsi = st.text_area("Deskripsi", value=data["profile"].get("deskripsi", ""))
@@ -193,7 +192,6 @@ elif mode == "Edit (Admin)":
         linkedin = st.text_input("LinkedIn", value=data["profile"].get("linkedin", ""))
         github = st.text_input("GitHub", value=data["profile"].get("github", ""))
 
-    # Upload Foto
     with st.expander("Foto Profil"):
         foto = st.file_uploader("Upload Gambar", type=["jpg", "jpeg", "png"])
         if foto is not None:
@@ -201,7 +199,6 @@ elif mode == "Edit (Admin)":
                 f.write(foto.read())
             st.success("Foto berhasil disimpan.")
 
-    # Edit Keahlian
     with st.expander("Keahlian"):
         if "skill_data" not in st.session_state:
             st.session_state.skill_data = data["skills"] if data["skills"] else []
@@ -227,7 +224,6 @@ elif mode == "Edit (Admin)":
 
         st.session_state.skill_data = new_skills
 
-    # Tambah Pengalaman
     with st.expander("Pengalaman"):
         new_judul = st.text_input("Judul Pengalaman")
         new_tahun = st.text_input("Tahun")
@@ -241,7 +237,6 @@ elif mode == "Edit (Admin)":
                 })
                 st.success("Pengalaman ditambahkan!")
 
-    # Tambah Proyek
     with st.expander("Proyek Portofolio"):
         proj_judul = st.text_input("Judul Proyek")
         proj_tahun = st.text_input("Tahun Proyek")
@@ -258,7 +253,20 @@ elif mode == "Edit (Admin)":
             })
             st.success("Proyek ditambahkan!")
 
-    # Simpan
+    with st.expander("Pesan dari Pengunjung"):
+        if os.path.exists("pesan.json"):
+            with open("pesan.json", "r") as f:
+                semua_pesan = json.load(f)
+            if semua_pesan:
+                for idx, psn in enumerate(semua_pesan):
+                    st.markdown(f"{idx+1}. Dari: {psn['nama']} ({psn['email']})")
+                    st.markdown(f"> {psn['pesan']}")
+                    st.markdown("---")
+            else:
+                st.info("Belum ada pesan.")
+        else:
+            st.info("Belum ada pesan.")
+
     if st.button("Simpan Semua Perubahan"):
         data["profile"]["nama"] = nama
         data["profile"]["deskripsi"] = deskripsi
