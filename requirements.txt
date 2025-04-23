@@ -1,2 +1,5 @@
 streamlit
 pillow
+streamlit
+gspread
+oauth2client
