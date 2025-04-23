@@ -27,17 +27,23 @@ def save_data(data):
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 
+from datetime import datetime
+
 def simpan_ke_google_sheet(nama, email, pesan):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(
-        dict(st.secrets["gcp_service_account"]), scope
-    )
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
     client = gspread.authorize(creds)
 
     try:
         sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
-        sheet.append_row([nama, email, pesan])
+
+        # Tambahkan header jika worksheet masih kosong
+        if not sheet.get_all_values():
+            sheet.append_row(["Waktu", "Nama", "Email", "Pesan"])
+
+        # Tambahkan data baru dengan waktu sekarang
+        waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        sheet.append_row([waktu, nama, email, pesan])
     except Exception as e:
         st.error(f"Gagal menyimpan ke Google Sheets: {e}")
 # Inisialisasi
