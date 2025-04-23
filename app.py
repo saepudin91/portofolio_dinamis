@@ -29,23 +29,23 @@ import gspread
 
 from datetime import datetime
 
+from datetime import datetime
+
 def simpan_ke_google_sheet(nama, email, pesan):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
     client = gspread.authorize(creds)
 
-    try:
-        sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
+    sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
+    values = sheet.get_all_values()
 
-        # Tambahkan header jika worksheet masih kosong
-        if not sheet.get_all_values():
-            sheet.append_row(["Waktu", "Nama", "Email", "Pesan"])
+    # Cek apakah header sudah ada (hanya jika benar-benar kosong atau header hilang)
+    if not values or values[0] != ["Waktu", "Nama", "Email", "Pesan"]:
+        sheet.insert_row(["Waktu", "Nama", "Email", "Pesan"], 1)
 
-        # Tambahkan data baru dengan waktu sekarang
-        waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        sheet.append_row([waktu, nama, email, pesan])
-    except Exception as e:
-        st.error(f"Gagal menyimpan ke Google Sheets: {e}")
+    # Tambahkan pesan ke bawah
+    waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    sheet.append_row([waktu, nama, email, pesan])
 # Inisialisasi
 data = load_data()
 if not os.path.exists("profile_photo.jpg"):
