@@ -31,6 +31,7 @@ def simpan_ke_google_sheet(nama, email, pesan):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
     # st.secrets["gcp_service_account"] sudah dict, tinggal di-cast ke dict biasa
+    st.write(type(st.secrets["gcp_service_account"]))
     creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
     
     client = gspread.authorize(creds)
