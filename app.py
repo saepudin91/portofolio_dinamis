@@ -111,7 +111,7 @@ if mode == "Tampilan Publik":
 
     # Foto Profil
     if os.path.getsize("profile_photo.jpg") > 0:
-        st.image("profile_photo.jpg", caption="Foto Profil", use_column_width=True)
+        st.image("profile_photo.jpg", caption="Foto Profil", use_container_width=True)
     else:
         st.write("Foto belum diunggah")
 
