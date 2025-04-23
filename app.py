@@ -232,7 +232,7 @@ elif mode == "Edit (Admin)":
             st.success("Proyek ditambahkan!")
 
     with st.expander("Pesan dari Pengunjung", expanded=False):
-    st.write("Berikut adalah pesan yang dikirim oleh pengunjung:")
+         st.write("Berikut adalah pesan yang dikirim oleh pengunjung:")
 
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
