@@ -25,8 +25,10 @@ def save_data(data):
 
 # Simpan Pesan ke Google Sheets
 def simpan_ke_google_sheet(nama, email, pesan):
+    import json
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+    creds_dict = json.loads(st.secrets["gcp_service_account"])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
     sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
     sheet.append_row([nama, email, pesan])
