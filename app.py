@@ -28,7 +28,7 @@ def simpan_ke_google_sheet(nama, email, pesan):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
     client = gspread.authorize(creds)
-    sheet = client.open("Data Portofolio").sheet1
+    sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
     sheet.append_row([nama, email, pesan])
 
 # Inisialisasi
@@ -45,7 +45,6 @@ mode = st.sidebar.radio("Pilih mode:", ["Tampilan Publik", "Edit (Admin)"])
 # ========== MODE PUBLIK ==========
 # ==========================
 if mode == "Tampilan Publik":
-    # Styling
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
@@ -58,13 +57,11 @@ if mode == "Tampilan Publik":
         </style>
     """, unsafe_allow_html=True)
 
-    # Foto dan Profil
     if os.path.getsize("profile_photo.jpg") > 0:
         st.image("profile_photo.jpg", caption="Foto Profil", use_container_width=True)
     st.markdown(f"<div class='custom-title'>{data['profile'].get('nama', 'Nama Belum Diisi')}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='custom-desc'>{data['profile'].get('deskripsi', 'Deskripsi belum diisi')}</div>", unsafe_allow_html=True)
 
-    # Keahlian
     st.markdown("<div class='section-title'>🛠 Keahlian</div>", unsafe_allow_html=True)
     for skill in data["skills"]:
         if ":" in skill:
@@ -75,12 +72,10 @@ if mode == "Tampilan Publik":
             except:
                 st.write(f"(Format salah: {skill})")
 
-    # Pengalaman
     st.markdown("<div class='section-title'>💼 Pengalaman</div>", unsafe_allow_html=True)
     for exp in data["pengalaman"]:
         st.markdown(f"<div class='pengalaman-text'><strong>{exp['judul']} ({exp['tahun']})</strong><br>{exp['deskripsi']}</div>", unsafe_allow_html=True)
 
-    # Proyek
     st.markdown("<div class='section-title'>📁 Portofolio Proyek</div>", unsafe_allow_html=True)
     for proj in data.get("projects", []):
         st.image(proj["gambar"], use_column_width=True)
@@ -89,11 +84,9 @@ if mode == "Tampilan Publik":
         if proj.get("link"):
             st.markdown(f"[Lihat Proyek]({proj['link']})", unsafe_allow_html=True)
 
-    # Kontak
     st.markdown("<div class='section-title'>📞 Hubungi Saya</div>", unsafe_allow_html=True)
     st.markdown("<div class='hubungi'><a href='https://wa.me/6287810059643' target='_blank'>WhatsApp</a></div>", unsafe_allow_html=True)
 
-    # Kirim Pesan
     st.markdown("<div class='section-title'>💬 Kirim Pesan ke Admin</div>", unsafe_allow_html=True)
     with st.form("form_pesan"):
         nama_pengirim = st.text_input("Nama")
@@ -117,7 +110,6 @@ elif mode == "Edit (Admin)":
         st.warning("Masukkan password untuk mengakses mode edit.")
         st.stop()
 
-    # Profil
     with st.expander("Profil dan Identitas", expanded=True):
         nama = st.text_input("Nama", value=data["profile"].get("nama", ""))
         deskripsi = st.text_area("Deskripsi", value=data["profile"].get("deskripsi", ""))
@@ -130,7 +122,6 @@ elif mode == "Edit (Admin)":
         linkedin = st.text_input("LinkedIn", value=data["profile"].get("linkedin", ""))
         github = st.text_input("GitHub", value=data["profile"].get("github", ""))
 
-    # Foto Profil
     with st.expander("Foto Profil"):
         foto = st.file_uploader("Upload Gambar", type=["jpg", "jpeg", "png"])
         if foto is not None:
@@ -138,7 +129,6 @@ elif mode == "Edit (Admin)":
                 f.write(foto.read())
             st.success("Foto berhasil disimpan.")
 
-    # Keahlian
     with st.expander("Keahlian"):
         if "skill_data" not in st.session_state:
             st.session_state.skill_data = data["skills"] if data["skills"] else []
@@ -164,7 +154,6 @@ elif mode == "Edit (Admin)":
 
         st.session_state.skill_data = new_skills
 
-    # Pengalaman
     with st.expander("Pengalaman"):
         new_judul = st.text_input("Judul Pengalaman")
         new_tahun = st.text_input("Tahun")
@@ -178,7 +167,6 @@ elif mode == "Edit (Admin)":
                 })
                 st.success("Pengalaman ditambahkan!")
 
-    # Proyek
     with st.expander("Proyek Portofolio"):
         proj_judul = st.text_input("Judul Proyek")
         proj_tahun = st.text_input("Tahun Proyek")
@@ -195,22 +183,8 @@ elif mode == "Edit (Admin)":
             })
             st.success("Proyek ditambahkan!")
 
-    # Pesan
-    with st.expander("Pesan dari Pengunjung"):
-        if os.path.exists("pesan.json"):
-            with open("pesan.json", "r") as f:
-                semua_pesan = json.load(f)
-            if semua_pesan:
-                for idx, psn in enumerate(semua_pesan):
-                    st.markdown(f"{idx+1}. Dari: {psn['nama']} ({psn['email']})")
-                    st.markdown(f"> {psn['pesan']}")
-                    st.markdown("---")
-            else:
-                st.info("Belum ada pesan.")
-        else:
-            st.info("Belum ada pesan.")
+    st.markdown("### Semua pesan pengunjung kini disimpan di Google Sheets (worksheet 'Pesan Pengunjung').")
 
-    # Simpan Perubahan
     if st.button("Simpan Semua Perubahan"):
         data["profile"]["nama"] = nama
         data["profile"]["deskripsi"] = deskripsi
