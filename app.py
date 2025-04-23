@@ -231,7 +231,24 @@ elif mode == "Edit (Admin)":
             })
             st.success("Proyek ditambahkan!")
 
-    st.markdown("### Semua pesan pengunjung kini disimpan di Google Sheets (worksheet 'Pesan Pengunjung').")
+    with st.expander("Pesan dari Pengunjung", expanded=False):
+        st.write("Berikut adalah pesan yang dikirim oleh pengunjung:")
+
+        try:
+            scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
+            client = gspread.authorize(creds)
+            sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
+            records = sheet.get_all_records()
+            if records:
+                for i, pesan in enumerate(records[::-1]):  # Tampilkan dari yang terbaru
+                    with st.expander(f"{pesan['Nama']} - {pesan['Waktu']}"):
+                        st.write(f"*Email:* {pesan['Email']}")
+                        st.write(f"*Pesan:* {pesan['Pesan']}")
+            else:
+                st.info("Belum ada pesan masuk.")
+        except Exception as e:
+            st.error(f"Gagal memuat pesan: {e}")
 
     if st.button("Simpan Semua Perubahan"):
         data["profile"]["nama"] = nama
