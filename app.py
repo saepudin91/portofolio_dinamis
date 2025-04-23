@@ -24,10 +24,15 @@ def save_data(data):
         json.dump(data, f, indent=4)
 
 # Simpan Pesan ke Google Sheets
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
+
 def simpan_ke_google_sheet(nama, email, pesan):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    creds_dict = st.secrets["gcp_service_account"]  # Tidak perlu json.loads()
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
+    # st.secrets["gcp_service_account"] sudah dict, tinggal di-cast ke dict biasa
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
+    
     client = gspread.authorize(creds)
     sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
     sheet.append_row([nama, email, pesan])
