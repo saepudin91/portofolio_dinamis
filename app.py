@@ -6,13 +6,20 @@ def load_data():
     if os.path.exists("data.json"):
         with open("data.json", "r") as f:
             return json.load(f)
-    return {"profile": {}, "skills": [], "pengalaman": []}
+    return {
+        "profile": {},
+        "identitas": {},
+        "skills": [],
+        "pengalaman": []
+    }
 
 def save_data(data):
     with open("data.json", "w") as f:
         json.dump(data, f, indent=4)
 
 st.set_page_config(page_title="Portofolio", layout="wide")
+st.markdown("""<style>body { background-color: #1e1e1e; color: white; }</style>""", unsafe_allow_html=True)
+
 st.sidebar.title("Mode")
 mode = st.sidebar.radio("Pilih mode:", ["Tampilan Publik", "Edit (Admin)"])
 
@@ -23,12 +30,23 @@ if not os.path.exists("profile_photo.jpg"):
         pass
 
 if mode == "Tampilan Publik":
-    st.title(data["profile"].get("nama", "Nama Belum Diisi"))
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        if os.path.exists("profile_photo.jpg") and os.path.getsize("profile_photo.jpg") > 0:
+            st.image("profile_photo.jpg", width=150)
 
-    if os.path.exists("profile_photo.jpg") and os.path.getsize("profile_photo.jpg") > 0:
-        st.image("profile_photo.jpg", width=150)
+    with col2:
+        st.title(data["profile"].get("nama", "Nama Belum Diisi"))
+        st.write(data["profile"].get("deskripsi", "Deskripsi belum diisi"))
 
-    st.write(data["profile"].get("deskripsi", "Deskripsi belum diisi"))
+    st.subheader("Identitas")
+    identitas = data.get("identitas", {})
+    st.write(f"Alamat: {identitas.get('alamat', '-')}")
+    st.write(f"Agama: {identitas.get('agama', '-')}")
+    st.write(f"Jenis Kelamin: {identitas.get('jk', '-')}")
+    st.write(f"Sosial Media: {identitas.get('sosmed', '-')}")
+    st.write(f"Email: {identitas.get('email', '-')}")
+    st.write(f"Nomor HP: {identitas.get('hp', '-')}")
 
     st.subheader("Keahlian")
     for skill in data["skills"]:
@@ -63,6 +81,14 @@ elif mode == "Edit (Admin)":
         with open("profile_photo.jpg", "wb") as f:
             f.write(foto.read())
         st.success("Foto berhasil disimpan.")
+
+    st.subheader("Identitas")
+    alamat = st.text_input("Alamat", value=data.get("identitas", {}).get("alamat", ""))
+    agama = st.text_input("Agama", value=data.get("identitas", {}).get("agama", ""))
+    jk = st.selectbox("Jenis Kelamin", ["Laki-laki", "Perempuan"], index=0 if data.get("identitas", {}).get("jk", "Laki-laki") == "Laki-laki" else 1)
+    sosmed = st.text_input("Sosial Media", value=data.get("identitas", {}).get("sosmed", ""))
+    email = st.text_input("Email", value=data.get("identitas", {}).get("email", ""))
+    hp = st.text_input("Nomor HP", value=data.get("identitas", {}).get("hp", ""))
 
     st.subheader("Keahlian")
     if "skill_data" not in st.session_state:
@@ -110,6 +136,14 @@ elif mode == "Edit (Admin)":
         data["profile"]["nama"] = nama
         data["profile"]["deskripsi"] = deskripsi
         data["skills"] = new_skills
+        data["identitas"] = {
+            "alamat": alamat,
+            "agama": agama,
+            "jk": jk,
+            "sosmed": sosmed,
+            "email": email,
+            "hp": hp
+        }
         save_data(data)
         st.success("Data berhasil disimpan!")
 
