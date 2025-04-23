@@ -151,6 +151,29 @@ if mode == "Tampilan Publik":
     # Kontak
     st.markdown("<div class='section-title'>📞 Hubungi Saya</div>", unsafe_allow_html=True)
     st.markdown("<div class='hubungi'><a href='https://wa.me/6287810059643' target='_blank'>WhatsApp</a></div>", unsafe_allow_html=True)
+    # Kirim Pesan ke Admin
+st.markdown("<div class='section-title'>💬 Kirim Pesan ke Admin</div>", unsafe_allow_html=True)
+with st.form("form_pesan"):
+    nama_pengirim = st.text_input("Nama")
+    email_pengirim = st.text_input("Email")
+    isi_pesan = st.text_area("Pesan")
+    submit = st.form_submit_button("Kirim")
+
+    if submit and nama_pengirim and isi_pesan:
+        pesan_baru = {
+            "nama": nama_pengirim,
+            "email": email_pengirim,
+            "pesan": isi_pesan
+        }
+        if os.path.exists("pesan.json"):
+            with open("pesan.json", "r") as f:
+                semua_pesan = json.load(f)
+        else:
+            semua_pesan = []
+        semua_pesan.append(pesan_baru)
+        with open("pesan.json", "w") as f:
+            json.dump(semua_pesan, f, indent=4)
+        st.success("Pesan berhasil dikirim!")
 
 # Mode Admin / Edit
 elif mode == "Edit (Admin)":
@@ -254,3 +277,18 @@ elif mode == "Edit (Admin)":
         }
         save_data(data)
         st.success("Data berhasil disimpan!")
+        
+        # Menampilkan pesan dari pengunjung
+with st.expander("Pesan dari Pengunjung"):
+    if os.path.exists("pesan.json"):
+        with open("pesan.json", "r") as f:
+            semua_pesan = json.load(f)
+        if semua_pesan:
+            for idx, psn in enumerate(semua_pesan):
+                st.markdown(f"{idx+1}. Dari: {psn['nama']} ({psn['email']})")
+                st.markdown(f"> {psn['pesan']}")
+                st.markdown("---")
+        else:
+            st.info("Belum ada pesan.")
+    else:
+        st.info("Belum ada pesan.")
