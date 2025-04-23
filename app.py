@@ -241,10 +241,14 @@ elif mode == "Edit (Admin)":
             sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
             records = sheet.get_all_records()
             if records:
-                for i, pesan in enumerate(records[::-1]):  # Tampilkan dari yang terbaru
-                    with st.expander(f"{pesan['Nama']} - {pesan['Waktu']}"):
-                        st.write(f"*Email:* {pesan['Email']}")
-                        st.write(f"*Pesan:* {pesan['Pesan']}")
+                for pesan in records[::-1]:
+                    st.markdown(f"""
+                        *Nama:* {pesan['Nama']}  
+                        *Email:* {pesan['Email']}  
+                        *Waktu:* {pesan['Waktu']}  
+                        *Pesan:* {pesan['Pesan']}  
+                        ---
+                    """)
             else:
                 st.info("Belum ada pesan masuk.")
         except Exception as e:
