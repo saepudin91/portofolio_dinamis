@@ -35,8 +35,7 @@ if not os.path.exists("profile_photo.jpg"):
 
 # Tampilan Publik
 if mode == "Tampilan Publik":
-    st.markdown(
-        """
+    st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
@@ -111,17 +110,14 @@ if mode == "Tampilan Publik":
         unsafe_allow_html=True
     )
 
-    # Foto Profil
     if os.path.getsize("profile_photo.jpg") > 0:
-       st.image("profile_photo.jpg", caption="Foto Profil", use_container_width=True)
+        st.image("profile_photo.jpg", caption="Foto Profil", use_container_width=True)
     else:
         st.write("Foto belum diunggah")
 
-    # Nama dan Deskripsi
     st.markdown(f"<div class='custom-title'>{data['profile'].get('nama', 'Nama Belum Diisi')}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='custom-desc'>{data['profile'].get('deskripsi', 'Deskripsi belum diisi')}</div>", unsafe_allow_html=True)
 
-    # Keahlian
     st.markdown("<div class='section-title'>🛠 Keahlian</div>", unsafe_allow_html=True)
     for skill in data["skills"]:
         if ":" in skill:
@@ -134,12 +130,10 @@ if mode == "Tampilan Publik":
         else:
             st.write(skill)
 
-    # Pengalaman
     st.markdown("<div class='section-title'>💼 Pengalaman</div>", unsafe_allow_html=True)
     for exp in data["pengalaman"]:
         st.markdown(f"<div class='pengalaman-text'><strong>{exp['judul']} ({exp['tahun']})</strong><br>{exp['deskripsi']}</div>", unsafe_allow_html=True)
 
-    # Portofolio Proyek
     st.markdown("<div class='section-title'>📁 Portofolio Proyek</div>", unsafe_allow_html=True)
     for proj in data.get("projects", []):
         st.image(proj["gambar"], use_column_width=True)
@@ -148,34 +142,28 @@ if mode == "Tampilan Publik":
         if proj.get("link"):
             st.markdown(f"[Lihat Proyek]({proj['link']})", unsafe_allow_html=True)
 
-    # Kontak
     st.markdown("<div class='section-title'>📞 Hubungi Saya</div>", unsafe_allow_html=True)
     st.markdown("<div class='hubungi'><a href='https://wa.me/6287810059643' target='_blank'>WhatsApp</a></div>", unsafe_allow_html=True)
-    # Kirim Pesan ke Admin
-st.markdown("<div class='section-title'>💬 Kirim Pesan ke Admin</div>", unsafe_allow_html=True)
-with st.form("form_pesan"):
-    nama_pengirim = st.text_input("Nama")
-    email_pengirim = st.text_input("Email")
-    isi_pesan = st.text_area("Pesan")
-    submit = st.form_submit_button("Kirim")
 
-    if submit and nama_pengirim and isi_pesan:
-        pesan_baru = {
-            "nama": nama_pengirim,
-            "email": email_pengirim,
-            "pesan": isi_pesan
-        }
-        if os.path.exists("pesan.json"):
-            with open("pesan.json", "r") as f:
-                semua_pesan = json.load(f)
-        else:
-            semua_pesan = []
-        semua_pesan.append(pesan_baru)
-        with open("pesan.json", "w") as f:
-            json.dump(semua_pesan, f, indent=4)
-        st.success("Pesan berhasil dikirim!")
+    st.markdown("<div class='section-title'>💬 Kirim Pesan ke Admin</div>", unsafe_allow_html=True)
+    with st.form("form_pesan"):
+        nama_pengirim = st.text_input("Nama")
+        email_pengirim = st.text_input("Email")
+        isi_pesan = st.text_area("Pesan")
+        submit = st.form_submit_button("Kirim")
 
-# Mode Admin / Edit
+        if submit and nama_pengirim and isi_pesan:
+            pesan_baru = {"nama": nama_pengirim, "email": email_pengirim, "pesan": isi_pesan}
+            if os.path.exists("pesan.json"):
+                with open("pesan.json", "r") as f:
+                    semua_pesan = json.load(f)
+            else:
+                semua_pesan = []
+            semua_pesan.append(pesan_baru)
+            with open("pesan.json", "w") as f:
+                json.dump(semua_pesan, f, indent=4)
+            st.success("Pesan berhasil dikirim!")
+
 elif mode == "Edit (Admin)":
     st.title("Mode Edit Portofolio")
     password = st.text_input("Masukkan Password Admin", type="password")
@@ -183,7 +171,6 @@ elif mode == "Edit (Admin)":
         st.warning("Masukkan password untuk mengakses mode edit.")
         st.stop()
 
-    # Data Profil
     with st.expander("Profil dan Identitas", expanded=True):
         nama = st.text_input("Nama", value=data["profile"].get("nama", ""))
         deskripsi = st.text_area("Deskripsi", value=data["profile"].get("deskripsi", ""))
@@ -196,7 +183,6 @@ elif mode == "Edit (Admin)":
         linkedin = st.text_input("LinkedIn", value=data["profile"].get("linkedin", ""))
         github = st.text_input("GitHub", value=data["profile"].get("github", ""))
 
-    # Upload Foto
     with st.expander("Foto Profil"):
         foto = st.file_uploader("Upload Gambar", type=["jpg", "jpeg", "png"])
         if foto is not None:
@@ -204,7 +190,6 @@ elif mode == "Edit (Admin)":
                 f.write(foto.read())
             st.success("Foto berhasil disimpan.")
 
-    # Edit Keahlian
     with st.expander("Keahlian"):
         if "skill_data" not in st.session_state:
             st.session_state.skill_data = data["skills"] if data["skills"] else []
@@ -230,7 +215,6 @@ elif mode == "Edit (Admin)":
 
         st.session_state.skill_data = new_skills
 
-    # Tambah Pengalaman
     with st.expander("Pengalaman"):
         new_judul = st.text_input("Judul Pengalaman")
         new_tahun = st.text_input("Tahun")
@@ -244,7 +228,6 @@ elif mode == "Edit (Admin)":
                 })
                 st.success("Pengalaman ditambahkan!")
 
-    # Tambah Proyek
     with st.expander("Proyek Portofolio"):
         proj_judul = st.text_input("Judul Proyek")
         proj_tahun = st.text_input("Tahun Proyek")
@@ -261,7 +244,20 @@ elif mode == "Edit (Admin)":
             })
             st.success("Proyek ditambahkan!")
 
-    # Simpan
+    with st.expander("Pesan dari Pengunjung"):
+        if os.path.exists("pesan.json"):
+            with open("pesan.json", "r") as f:
+                semua_pesan = json.load(f)
+            if semua_pesan:
+                for idx, psn in enumerate(semua_pesan):
+                    st.markdown(f"{idx+1}. Dari: {psn['nama']} ({psn['email']})")
+                    st.markdown(f"> {psn['pesan']}")
+                    st.markdown("---")
+            else:
+                st.info("Belum ada pesan.")
+        else:
+            st.info("Belum ada pesan.")
+
     if st.button("Simpan Semua Perubahan"):
         data["profile"]["nama"] = nama
         data["profile"]["deskripsi"] = deskripsi
@@ -277,18 +273,3 @@ elif mode == "Edit (Admin)":
         }
         save_data(data)
         st.success("Data berhasil disimpan!")
-        
-        # Menampilkan pesan dari pengunjung
-with st.expander("Pesan dari Pengunjung"):
-    if os.path.exists("pesan.json"):
-        with open("pesan.json", "r") as f:
-            semua_pesan = json.load(f)
-        if semua_pesan:
-            for idx, psn in enumerate(semua_pesan):
-                st.markdown(f"{idx+1}. Dari: {psn['nama']} ({psn['email']})")
-                st.markdown(f"> {psn['pesan']}")
-                st.markdown("---")
-        else:
-            st.info("Belum ada pesan.")
-    else:
-        st.info("Belum ada pesan.")
