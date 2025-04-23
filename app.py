@@ -4,6 +4,7 @@ import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
+import pandas as pd
 
 st.set_page_config(page_title="Portofolio", layout="centered")
 
