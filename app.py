@@ -232,28 +232,23 @@ elif mode == "Edit (Admin)":
             st.success("Proyek ditambahkan!")
 
     with st.expander("Pesan dari Pengunjung", expanded=False):
-        st.write("Berikut adalah pesan yang dikirim oleh pengunjung:")
+    st.write("Berikut adalah pesan yang dikirim oleh pengunjung:")
 
-        try:
-            scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-            creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
-            client = gspread.authorize(creds)
-            sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
-            records = sheet.get_all_records()
-            if records:
-                for pesan in records[::-1]:
-                    st.markdown(f"""
-                        *Nama:* {pesan['Nama']}  
-                        *Email:* {pesan['Email']}  
-                        *Waktu:* {pesan['Waktu']}  
-                        *Pesan:* {pesan['Pesan']}  
-                        ---
-                    """)
-            else:
-                st.info("Belum ada pesan masuk.")
-        except Exception as e:
-            st.error(f"Gagal memuat pesan: {e}")
+    try:
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
+        client = gspread.authorize(creds)
+        sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
+        records = sheet.get_all_records()
 
+        if records:
+            df_pesan = pd.DataFrame(records)
+            st.dataframe(df_pesan)
+        else:
+            st.info("Belum ada pesan masuk.")
+    except Exception as e:
+        st.error(f"Gagal memuat pesan: {e}")
+        
     if st.button("Simpan Semua Perubahan"):
         data["profile"]["nama"] = nama
         data["profile"]["deskripsi"] = deskripsi
