@@ -30,13 +30,16 @@ import gspread
 def simpan_ke_google_sheet(nama, email, pesan):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-    # st.secrets["gcp_service_account"] sudah dict, tinggal di-cast ke dict biasa
-    st.write(type(st.secrets["gcp_service_account"]))
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
-    
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(
+        dict(st.secrets["gcp_service_account"]), scope
+    )
     client = gspread.authorize(creds)
-    sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
-    sheet.append_row([nama, email, pesan])
+
+    try:
+        sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
+        sheet.append_row([nama, email, pesan])
+    except Exception as e:
+        st.error(f"Gagal menyimpan ke Google Sheets: {e}")
 # Inisialisasi
 data = load_data()
 if not os.path.exists("profile_photo.jpg"):
