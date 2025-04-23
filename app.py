@@ -35,20 +35,96 @@ if not os.path.exists("profile_photo.jpg"):
 
 # Tampilan Publik
 if mode == "Tampilan Publik":
+    st.markdown(
+        """
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        .custom-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 6vw;
+            text-align: center;
+            color: #2C3E50;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        @media (min-width: 768px) {
+            .custom-title {
+                font-size: 2rem;
+            }
+        }
+
+        .custom-desc {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3.8vw;
+            text-align: center;
+            color: #555;
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+        }
+
+        @media (min-width: 768px) {
+            .custom-desc {
+                font-size: 1.2rem;
+            }
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 5vw;
+            color: #34495E;
+            margin-top: 2rem;
+            font-weight: 600;
+        }
+
+        @media (min-width: 768px) {
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        .skill-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            margin-bottom: 0.2rem;
+            font-weight: 500;
+        }
+
+        .pengalaman-text, .project-desc {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            color: #444;
+        }
+
+        .hubungi {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Foto Profil
     if os.path.getsize("profile_photo.jpg") > 0:
-        st.image("profile_photo.jpg", caption="Foto Profil", use_container_width=True)
+        st.image("profile_photo.jpg", caption="Foto Profil", use_column_width=True)
     else:
         st.write("Foto belum diunggah")
-    
-    st.title(data["profile"].get("nama", "Nama Belum Diisi"))
-    st.markdown(data["profile"].get("deskripsi", "Deskripsi belum diisi"))
 
-    st.markdown("---")
-    st.subheader("Keahlian")
+    # Nama dan Deskripsi
+    st.markdown(f"<div class='custom-title'>{data['profile'].get('nama', 'Nama Belum Diisi')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='custom-desc'>{data['profile'].get('deskripsi', 'Deskripsi belum diisi')}</div>", unsafe_allow_html=True)
+
+    # Keahlian
+    st.markdown("<div class='section-title'>Keahlian</div>", unsafe_allow_html=True)
     for skill in data["skills"]:
         if ":" in skill:
             nama, nilai = skill.split(":")
-            st.write(f"{nama.strip()} ({nilai.strip()}%)")
+            st.markdown(f"<div class='skill-name'>{nama.strip()} ({nilai.strip()}%)</div>", unsafe_allow_html=True)
             try:
                 st.progress(int(nilai.strip()))
             except:
@@ -56,23 +132,23 @@ if mode == "Tampilan Publik":
         else:
             st.write(skill)
 
-    st.markdown("---")
-    st.subheader("Pengalaman")
+    # Pengalaman
+    st.markdown("<div class='section-title'>Pengalaman</div>", unsafe_allow_html=True)
     for exp in data["pengalaman"]:
-        st.markdown(f"{exp['judul']} ({exp['tahun']})**  \n{exp['deskripsi']}")
+        st.markdown(f"<div class='pengalaman-text'><strong>{exp['judul']} ({exp['tahun']})</strong><br>{exp['deskripsi']}</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("Portofolio Proyek")
+    # Portofolio Proyek
+    st.markdown("<div class='section-title'>Portofolio Proyek</div>", unsafe_allow_html=True)
     for proj in data.get("projects", []):
-        st.image(proj["gambar"], use_container_width=True)
-        st.markdown(f"### {proj['judul']} ({proj['tahun']})")
-        st.write(proj["deskripsi"])
+        st.image(proj["gambar"], use_column_width=True)
+        st.markdown(f"<div class='pengalaman-text'><strong>{proj['judul']} ({proj['tahun']})</strong></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='project-desc'>{proj['deskripsi']}</div>", unsafe_allow_html=True)
         if proj.get("link"):
             st.markdown(f"[Lihat Proyek]({proj['link']})", unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("Hubungi Saya")
-    st.markdown("[WhatsApp](https://wa.me/6287810059643)")
+    # Kontak
+    st.markdown("<div class='section-title'>Hubungi Saya</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hubungi'><a href='https://wa.me/6287810059643' target='_blank'>WhatsApp</a></div>", unsafe_allow_html=True)
 
 # Mode Admin / Edit
 elif mode == "Edit (Admin)":
