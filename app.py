@@ -172,6 +172,105 @@ if mode == "Tampilan Publik":
             except Exception as e:
                 st.error(f"Gagal menyimpan ke Google Sheets: {e}")
 
-# Mode admin tetap sama seperti sebelumnya
+# Mode Admin / Edit
 elif mode == "Edit (Admin)":
-    ... # Seluruh bagian Edit (Admin) tetap sama
+    st.title("Mode Edit Portofolio")
+    password = st.text_input("Masukkan Password Admin", type="password")
+    if password != "admin123":
+        st.warning("Masukkan password untuk mengakses mode edit.")
+        st.stop()
+
+    # Data Profil
+    with st.expander("Profil dan Identitas", expanded=True):
+        nama = st.text_input("Nama", value=data["profile"].get("nama", ""))
+        deskripsi = st.text_area("Deskripsi", value=data["profile"].get("deskripsi", ""))
+        alamat = st.text_input("Alamat", value=data["profile"].get("alamat", ""))
+        jenis_kelamin = st.selectbox("Jenis Kelamin", ["Laki-laki", "Perempuan"], 
+                                     index=0 if data["profile"].get("jenis_kelamin") == "Laki-laki" else 1)
+        agama = st.text_input("Agama", value=data["profile"].get("agama", ""))
+        tanggal_lahir = st.date_input("Tanggal Lahir")
+        instagram = st.text_input("Instagram", value=data["profile"].get("instagram", ""))
+        linkedin = st.text_input("LinkedIn", value=data["profile"].get("linkedin", ""))
+        github = st.text_input("GitHub", value=data["profile"].get("github", ""))
+
+    # Upload Foto
+    with st.expander("Foto Profil"):
+        foto = st.file_uploader("Upload Gambar", type=["jpg", "jpeg", "png"])
+        if foto is not None:
+            with open("profile_photo.jpg", "wb") as f:
+                f.write(foto.read())
+            st.success("Foto berhasil disimpan.")
+
+    # Edit Keahlian
+    with st.expander("Keahlian"):
+        if "skill_data" not in st.session_state:
+            st.session_state.skill_data = data["skills"] if data["skills"] else []
+
+        new_skills = []
+        remove_indexes = []
+
+        for i, skill in enumerate(st.session_state.skill_data):
+            nama_skill, nilai = skill.split(":") if ":" in skill else (skill, "50")
+            input_nama = st.text_input(f"Nama Keahlian {i+1}", value=nama_skill.strip(), key=f"skill_nama_{i}")
+            input_nilai = st.slider(f"Skor (%) {i+1}", 0, 100, int(nilai.strip()), key=f"skill_nilai_{i}")
+            if st.button("Hapus Keahlian", key=f"hapus_{i}"):
+                remove_indexes.append(i)
+            new_skills.append(f"{input_nama}: {input_nilai}")
+
+        for idx in sorted(remove_indexes, reverse=True):
+            new_skills.pop(idx)
+
+        if st.button("Tambah Keahlian Baru"):
+            new_skills.append("Keahlian Baru: 50")
+            st.session_state.skill_data = new_skills
+            st.rerun()
+
+        st.session_state.skill_data = new_skills
+
+    # Tambah Pengalaman
+    with st.expander("Pengalaman"):
+        new_judul = st.text_input("Judul Pengalaman")
+        new_tahun = st.text_input("Tahun")
+        new_desc = st.text_area("Deskripsi Pengalaman")
+        if st.button("Tambah Pengalaman"):
+            if new_judul and new_tahun:
+                data["pengalaman"].append({
+                    "judul": new_judul,
+                    "tahun": new_tahun,
+                    "deskripsi": new_desc
+                })
+                st.success("Pengalaman ditambahkan!")
+
+    # Tambah Proyek
+    with st.expander("Proyek Portofolio"):
+        proj_judul = st.text_input("Judul Proyek")
+        proj_tahun = st.text_input("Tahun Proyek")
+        proj_desc = st.text_area("Deskripsi Proyek")
+        proj_link = st.text_input("Link Proyek")
+        proj_gambar = st.text_input("Link Gambar (URL)")
+        if st.button("Tambah Proyek"):
+            data["projects"].append({
+                "judul": proj_judul,
+                "tahun": proj_tahun,
+                "deskripsi": proj_desc,
+                "link": proj_link,
+                "gambar": proj_gambar
+            })
+            st.success("Proyek ditambahkan!")
+
+    # Simpan
+    if st.button("Simpan Semua Perubahan"):
+        data["profile"]["nama"] = nama
+        data["profile"]["deskripsi"] = deskripsi
+        data["skills"] = new_skills
+        data["Identitas"] = {
+            "alamat": alamat,
+            "jenis_kelamin": jenis_kelamin,
+            "agama": agama,
+            "tanggal_lahir": str(tanggal_lahir),
+            "instagram": instagram,
+            "linkedin": linkedin,
+            "github": github
+        }
+        save_data(data)
+        st.success("Data berhasil disimpan!")
