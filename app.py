@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import os
 
-st.set_page_config(page_title="Portofolio", layout="wide")
+st.set_page_config(page_title="Portofolio", layout="centered")
 
 def load_data():
     if os.path.exists("data.json"):
@@ -24,17 +24,9 @@ if not os.path.exists("profile_photo.jpg"):
         pass
 
 if mode == "Tampilan Publik":
-    col1, col2 = st.columns([1, 3])
-
-    with col1:
-        if os.path.exists("profile_photo.jpg") and os.path.getsize("profile_photo.jpg") > 0:
-            st.image("profile_photo.jpg", width=180)
-        else:
-            st.write("Foto belum diunggah")
-
-    with col2:
-        st.title(data["profile"].get("nama", "Nama Belum Diisi"))
-        st.write(data["profile"].get("deskripsi", "Deskripsi belum diisi"))
+    st.image("profile_photo.jpg", caption="Foto Profil", use_column_width=True) if os.path.getsize("profile_photo.jpg") > 0 else st.write("Foto belum diunggah")
+    st.title(data["profile"].get("nama", "Nama Belum Diisi"))
+    st.markdown(data["profile"].get("deskripsi", "Deskripsi belum diisi"))
 
     st.markdown("---")
     st.subheader("Keahlian")
@@ -52,13 +44,13 @@ if mode == "Tampilan Publik":
     st.markdown("---")
     st.subheader("Pengalaman")
     for exp in data["pengalaman"]:
-        st.markdown(f"{exp['judul']}** ({exp['tahun']})  \n{exp['deskripsi']}")
+        st.markdown(f"{exp['judul']} ({exp['tahun']})**  \n{exp['deskripsi']}")
 
     st.markdown("---")
     st.subheader("Portofolio Proyek")
     for proj in data.get("projects", []):
+        st.image(proj["gambar"], use_column_width=True)
         st.markdown(f"### {proj['judul']} ({proj['tahun']})")
-        st.image(proj["gambar"], width=300)
         st.write(proj["deskripsi"])
         if proj.get("link"):
             st.markdown(f"[Lihat Proyek]({proj['link']})", unsafe_allow_html=True)
@@ -74,83 +66,77 @@ elif mode == "Edit (Admin)":
         st.warning("Masukkan password untuk mengakses mode edit.")
         st.stop()
 
-    st.subheader("Profil")
-    nama = st.text_input("Nama", value=data["profile"].get("nama", ""))
-    deskripsi = st.text_area("Deskripsi", value=data["profile"].get("deskripsi", ""))
+    with st.expander("Profil dan Identitas", expanded=True):
+        nama = st.text_input("Nama", value=data["profile"].get("nama", ""))
+        deskripsi = st.text_area("Deskripsi", value=data["profile"].get("deskripsi", ""))
+        alamat = st.text_input("Alamat", value=data["profile"].get("alamat", ""))
+        jenis_kelamin = st.selectbox("Jenis Kelamin", ["Laki-laki", "Perempuan"], index=0 if data["profile"].get("jenis_kelamin") == "Laki-laki" else 1)
+        agama = st.text_input("Agama", value=data["profile"].get("agama", ""))
+        tanggal_lahir = st.date_input("Tanggal Lahir")
+        instagram = st.text_input("Instagram", value=data["profile"].get("instagram", ""))
+        linkedin = st.text_input("LinkedIn", value=data["profile"].get("linkedin", ""))
+        github = st.text_input("GitHub", value=data["profile"].get("github", ""))
 
-    st.subheader("Identitas")
-    alamat = st.text_input("Alamat", value=data["profile"].get("alamat", ""))
-    jenis_kelamin = st.selectbox("Jenis Kelamin", ["Laki-laki", "Perempuan"], index=0 if data["profile"].get("jenis_kelamin") == "Laki-laki" else 1)
-    agama = st.text_input("Agama", value=data["profile"].get("agama", ""))
-    tanggal_lahir = st.date_input("Tanggal Lahir")
-    instagram = st.text_input("Instagram", value=data["profile"].get("instagram", ""))
-    linkedin = st.text_input("LinkedIn", value=data["profile"].get("linkedin", ""))
-    github = st.text_input("GitHub", value=data["profile"].get("github", ""))
+    with st.expander("Foto Profil"):
+        foto = st.file_uploader("Upload Gambar", type=["jpg", "jpeg", "png"])
+        if foto is not None:
+            with open("profile_photo.jpg", "wb") as f:
+                f.write(foto.read())
+            st.success("Foto berhasil disimpan.")
 
-    st.subheader("Upload Foto Profil")
-    foto = st.file_uploader("Upload Gambar", type=["jpg", "jpeg", "png"])
-    if foto is not None:
-        with open("profile_photo.jpg", "wb") as f:
-            f.write(foto.read())
-        st.success("Foto berhasil disimpan.")
+    with st.expander("Keahlian"):
+        if "skill_data" not in st.session_state:
+            st.session_state.skill_data = data["skills"] if data["skills"] else []
 
-    st.subheader("Keahlian")
-    if "skill_data" not in st.session_state:
-        st.session_state.skill_data = data["skills"] if data["skills"] else []
+        new_skills = []
+        remove_indexes = []
 
-    new_skills = []
-    remove_indexes = []
-
-    for i, skill in enumerate(st.session_state.skill_data):
-        nama_skill, nilai = skill.split(":") if ":" in skill else (skill, "50")
-        col1, col2, col3 = st.columns([2, 2, 1])
-        with col1:
+        for i, skill in enumerate(st.session_state.skill_data):
+            nama_skill, nilai = skill.split(":") if ":" in skill else (skill, "50")
             input_nama = st.text_input(f"Nama Keahlian {i+1}", value=nama_skill.strip(), key=f"skill_nama_{i}")
-        with col2:
             input_nilai = st.slider(f"Skor (%) {i+1}", 0, 100, int(nilai.strip()), key=f"skill_nilai_{i}")
-        with col3:
-            if st.button("Hapus", key=f"hapus_{i}"):
+            if st.button("Hapus Keahlian", key=f"hapus_{i}"):
                 remove_indexes.append(i)
-        new_skills.append(f"{input_nama}: {input_nilai}")
+            new_skills.append(f"{input_nama}: {input_nilai}")
 
-    for idx in sorted(remove_indexes, reverse=True):
-        new_skills.pop(idx)
+        for idx in sorted(remove_indexes, reverse=True):
+            new_skills.pop(idx)
 
-    if st.button("Tambah Keahlian Baru"):
-        new_skills.append("Keahlian Baru: 50")
+        if st.button("Tambah Keahlian Baru"):
+            new_skills.append("Keahlian Baru: 50")
+            st.session_state.skill_data = new_skills
+            st.rerun()
+
         st.session_state.skill_data = new_skills
-        st.rerun()
 
-    st.session_state.skill_data = new_skills
+    with st.expander("Pengalaman"):
+        new_judul = st.text_input("Judul Pengalaman")
+        new_tahun = st.text_input("Tahun")
+        new_desc = st.text_area("Deskripsi Pengalaman")
+        if st.button("Tambah Pengalaman"):
+            if new_judul and new_tahun:
+                data["pengalaman"].append({
+                    "judul": new_judul,
+                    "tahun": new_tahun,
+                    "deskripsi": new_desc
+                })
+                st.success("Pengalaman ditambahkan!")
 
-    st.subheader("Tambah Pengalaman Baru")
-    new_judul = st.text_input("Judul Pengalaman")
-    new_tahun = st.text_input("Tahun")
-    new_desc = st.text_area("Deskripsi Pengalaman")
-    if st.button("Tambah Pengalaman"):
-        if new_judul and new_tahun:
-            data["pengalaman"].append({
-                "judul": new_judul,
-                "tahun": new_tahun,
-                "deskripsi": new_desc
+    with st.expander("Proyek Portofolio"):
+        proj_judul = st.text_input("Judul Proyek")
+        proj_tahun = st.text_input("Tahun Proyek")
+        proj_desc = st.text_area("Deskripsi Proyek")
+        proj_link = st.text_input("Link Proyek")
+        proj_gambar = st.text_input("Link Gambar (URL)")
+        if st.button("Tambah Proyek"):
+            data["projects"].append({
+                "judul": proj_judul,
+                "tahun": proj_tahun,
+                "deskripsi": proj_desc,
+                "link": proj_link,
+                "gambar": proj_gambar
             })
-            st.success("Pengalaman ditambahkan!")
-
-    st.subheader("Tambah Proyek Portofolio")
-    proj_judul = st.text_input("Judul Proyek")
-    proj_tahun = st.text_input("Tahun Proyek")
-    proj_desc = st.text_area("Deskripsi Proyek")
-    proj_link = st.text_input("Link Proyek")
-    proj_gambar = st.text_input("Link Gambar (URL)")
-    if st.button("Tambah Proyek"):
-        data["projects"].append({
-            "judul": proj_judul,
-            "tahun": proj_tahun,
-            "deskripsi": proj_desc,
-            "link": proj_link,
-            "gambar": proj_gambar
-        })
-        st.success("Proyek ditambahkan!")
+            st.success("Proyek ditambahkan!")
 
     if st.button("Simpan Semua Perubahan"):
         data["profile"]["nama"] = nama
@@ -167,7 +153,3 @@ elif mode == "Edit (Admin)":
         }
         save_data(data)
         st.success("Data berhasil disimpan!")
-
-    if st.checkbox("Lihat Semua Pengalaman Saat Ini"):
-        for i, exp in enumerate(data["pengalaman"]):
-            st.write(f"{i+1}. {exp['judul']} ({exp['tahun']})")
