@@ -30,39 +30,39 @@ if not os.path.exists("profile_photo.jpg"):
         pass
 
 if mode == "Tampilan Publik":
-    col1, col2 = st.columns([1, 2])
+    col1, col2 = st.columns([1, 3])
     with col1:
         if os.path.exists("profile_photo.jpg") and os.path.getsize("profile_photo.jpg") > 0:
             st.image("profile_photo.jpg", width=150)
+
+        st.markdown("### Identitas")
+        identitas = data.get("identitas", {})
+        st.markdown(f"*Alamat:* {identitas.get('alamat', '-')}")
+        st.markdown(f"*Agama:* {identitas.get('agama', '-')}")
+        st.markdown(f"*Jenis Kelamin:* {identitas.get('jk', '-')}")
+        st.markdown(f"*Sosial Media:* {identitas.get('sosmed', '-')}")
+        st.markdown(f"*Email:* {identitas.get('email', '-')}")
+        st.markdown(f"*Nomor HP:* {identitas.get('hp', '-')}")
 
     with col2:
         st.title(data["profile"].get("nama", "Nama Belum Diisi"))
         st.write(data["profile"].get("deskripsi", "Deskripsi belum diisi"))
 
-    st.subheader("Identitas")
-    identitas = data.get("identitas", {})
-    st.write(f"Alamat: {identitas.get('alamat', '-')}")
-    st.write(f"Agama: {identitas.get('agama', '-')}")
-    st.write(f"Jenis Kelamin: {identitas.get('jk', '-')}")
-    st.write(f"Sosial Media: {identitas.get('sosmed', '-')}")
-    st.write(f"Email: {identitas.get('email', '-')}")
-    st.write(f"Nomor HP: {identitas.get('hp', '-')}")
+        st.subheader("Keahlian")
+        for skill in data["skills"]:
+            if ":" in skill:
+                nama, nilai = skill.split(":")
+                st.write(f"{nama.strip()} ({nilai.strip()}%)")
+                try:
+                    st.progress(int(nilai.strip()))
+                except:
+                    st.write(f"(Format salah: {skill})")
+            else:
+                st.write(skill)
 
-    st.subheader("Keahlian")
-    for skill in data["skills"]:
-        if ":" in skill:
-            nama, nilai = skill.split(":")
-            st.write(f"{nama.strip()} ({nilai.strip()}%)")
-            try:
-                st.progress(int(nilai.strip()))
-            except:
-                st.write(f"(Format salah: {skill})")
-        else:
-            st.write(skill)
-
-    st.subheader("Pengalaman")
-    for exp in data["pengalaman"]:
-        st.write(f"- {exp['judul']} ({exp['tahun']})  \n  {exp['deskripsi']}")
+        st.subheader("Pengalaman")
+        for exp in data["pengalaman"]:
+            st.write(f"- {exp['judul']} ({exp['tahun']})  \n  {exp['deskripsi']}")
 
 elif mode == "Edit (Admin)":
     st.title("Mode Edit Portofolio")
