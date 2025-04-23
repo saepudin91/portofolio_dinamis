@@ -65,7 +65,7 @@ if mode == "Tampilan Publik":
 
     st.markdown("---")
     st.subheader("Hubungi Saya")
-    st.markdown("[WhatsApp](https://wa.me/6281234567890)")
+    st.markdown("[WhatsApp](https://wa.me/087810059643)")
 
 elif mode == "Edit (Admin)":
     st.title("Mode Edit Portofolio")
