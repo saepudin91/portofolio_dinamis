@@ -3,6 +3,7 @@ import json
 import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
 
 st.set_page_config(page_title="Portofolio", layout="centered")
 
@@ -24,28 +25,17 @@ def save_data(data):
         json.dump(data, f, indent=4)
 
 # Simpan Pesan ke Google Sheets
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
-
-from datetime import datetime
-
-from datetime import datetime
-
 def simpan_ke_google_sheet(nama, email, pesan):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
     client = gspread.authorize(creds)
-
     sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
     values = sheet.get_all_values()
-
-    # Cek apakah header sudah ada (hanya jika benar-benar kosong atau header hilang)
     if not values or values[0] != ["Waktu", "Nama", "Email", "Pesan"]:
         sheet.insert_row(["Waktu", "Nama", "Email", "Pesan"], 1)
-
-    # Tambahkan pesan ke bawah
     waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sheet.append_row([waktu, nama, email, pesan])
+
 # Inisialisasi
 data = load_data()
 if not os.path.exists("profile_photo.jpg"):
@@ -63,13 +53,54 @@ if mode == "Tampilan Publik":
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-        .custom-title { font-family: 'Poppins', sans-serif; font-size: 6vw; text-align: center; color: #2C3E50; font-weight: 600; }
-        .custom-desc { font-family: 'Poppins', sans-serif; font-size: 3.8vw; text-align: center; color: #555; font-weight: 400; }
-        .section-title { font-family: 'Poppins', sans-serif; font-size: 5vw; color: #34495E; font-weight: 600; border-bottom: 2px solid #ddd; padding-bottom: 0.2rem; }
-        .skill-name { font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 500; }
-        .pengalaman-text, .project-desc { font-family: 'Poppins', sans-serif; font-size: 0.95rem; color: #444; }
-        .hubungi { font-family: 'Poppins', sans-serif; font-size: 1rem; text-align: center; margin-top: 2rem; }
+        .container-publik {
+            max-width: 800px;
+            margin: auto;
+        }
+        .custom-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 5vw;
+            text-align: center;
+            color: #2C3E50;
+            font-weight: 600;
+        }
+        .custom-desc {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3.5vw;
+            text-align: center;
+            color: #555;
+        }
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 4vw;
+            color: #34495E;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 0.2rem;
+            margin-top: 2rem;
+        }
+        .skill-name, .pengalaman-text, .project-desc {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+        }
+        .hubungi {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+        @media (min-width: 768px) {
+            .custom-title { font-size: 2.5vw; }
+            .custom-desc { font-size: 1.5vw; }
+            .section-title { font-size: 1.8vw; }
+        }
+        @media (max-width: 480px) {
+            .custom-title { font-size: 7vw; }
+            .custom-desc { font-size: 4.5vw; }
+            .section-title { font-size: 5vw; }
+        }
         </style>
+        <div class="container-publik">
     """, unsafe_allow_html=True)
 
     if os.path.getsize("profile_photo.jpg") > 0:
@@ -114,6 +145,8 @@ if mode == "Tampilan Publik":
                 st.success("Pesan berhasil dikirim dan disimpan ke Google Sheets!")
             except Exception as e:
                 st.error(f"Gagal menyimpan ke Google Sheets: {e}")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================
 # ========== MODE ADMIN ==========
