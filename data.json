@@ -1,0 +1,20 @@
+{
+    "profile": {
+        "nama": "Muhamad Saepudin",
+        "deskripsi": "Saya adalah seorang pengembang aplikasi Streamlit yang antusias belajar hal baru."
+    },
+    "skills": [
+        "Python: 85",
+        "Machine Learning: 92",
+        "Data Analysis: 32",
+        "Web Development: 80",
+        "Java: 78"
+    ],
+    "pengalaman": [
+        {
+            "judul": "Intern Data Analyst - PT ABC",
+            "tahun": "2023",
+            "deskripsi": "Bertanggung jawab untuk analisis data penjualan dan visualisasi."
+        }
+    ]
+}
