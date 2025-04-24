@@ -5,7 +5,6 @@ from datetime import datetime
 import pandas as pd
 
 st.set_page_config(page_title="Portofolio", layout="centered")
-
 # Koneksi Google Sheets
 def connect_sheet(sheet_name):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
