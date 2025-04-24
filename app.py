@@ -1,6 +1,4 @@
 import streamlit as st
-import json
-import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
@@ -8,48 +6,63 @@ import pandas as pd
 
 st.set_page_config(page_title="Portofolio", layout="centered")
 
-# Load dan Simpan Data JSON
-def load_data():
-    if os.path.exists("data.json"):
-        with open("data.json", "r") as f:
-            return json.load(f)
-    return {
-        "profile": {},
-        "skills": [],
-        "pengalaman": [],
-        "identitas": {},
-        "projects": []
-    }
-
-def save_data(data):
-    with open("data.json", "w") as f:
-        json.dump(data, f, indent=4)
-
-# Simpan Pesan ke Google Sheets
-def simpan_ke_google_sheet(nama, email, pesan):
+# Koneksi Google Sheets
+def connect_sheet(sheet_name):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
     client = gspread.authorize(creds)
-    sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
+    return client.open("Data Portofolio").worksheet(sheet_name)
+
+# Load data dari Google Sheets
+def load_data():
+    try:
+        sheet = connect_sheet("Data")
+        rows = sheet.get_all_records()
+        if rows:
+            return rows[0]
+        else:
+            return {}
+    except:
+        return {}
+
+# Simpan data ke Google Sheets
+def save_data(data):
+    sheet = connect_sheet("Data")
+    sheet.clear()
+    headers = list(data.keys())
+    values = list(data.values())
+    sheet.append_row(headers)
+    sheet.append_row(values)
+
+# Simpan Pesan
+
+def simpan_ke_google_sheet(nama, email, pesan):
+    sheet = connect_sheet("Pesan Pengunjung")
     values = sheet.get_all_values()
     if not values or values[0] != ["Waktu", "Nama", "Email", "Pesan"]:
         sheet.insert_row(["Waktu", "Nama", "Email", "Pesan"], 1)
     waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sheet.append_row([waktu, nama, email, pesan])
 
-# Inisialisasi
-data = load_data()
-if not os.path.exists("profile_photo.jpg"):
-    with open("profile_photo.jpg", "wb") as f:
-        pass
+# Fungsi umum untuk data tabel (skills, pengalaman, proyek)
+def load_table(sheet_name):
+    sheet = connect_sheet(sheet_name)
+    records = sheet.get_all_records()
+    return pd.DataFrame(records)
 
-# Sidebar Mode
+def save_table(sheet_name, df):
+    sheet = connect_sheet(sheet_name)
+    sheet.clear()
+    sheet.append_row(list(df.columns))
+    for _, row in df.iterrows():
+        sheet.append_row(row.tolist())
+
+sheet_data = load_data()
+
+# Sidebar
 st.sidebar.title("Mode")
 mode = st.sidebar.radio("Pilih mode:", ["Tampilan Publik", "Edit (Admin)"])
 
-# ==========================
-# ========== MODE PUBLIK ==========
-# ==========================
 if mode == "Tampilan Publik":
     st.markdown("""
         <style>
@@ -80,9 +93,11 @@ if mode == "Tampilan Publik":
             padding-bottom: 0.2rem;
             margin-top: 2rem;
         }
-        .skill-name, .pengalaman-text, .project-desc {
+        .section-entry {
             font-family: 'Poppins', sans-serif;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 0.5rem;
         }
         .hubungi {
             font-family: 'Poppins', sans-serif;
@@ -104,32 +119,16 @@ if mode == "Tampilan Publik":
         <div class="container-publik">
     """, unsafe_allow_html=True)
 
-    if os.path.getsize("profile_photo.jpg") > 0:
-        st.image("profile_photo.jpg", caption="Foto Profil", use_container_width=True)
-    st.markdown(f"<div class='custom-title'>{data['profile'].get('nama', 'Nama Belum Diisi')}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='custom-desc'>{data['profile'].get('deskripsi', 'Deskripsi belum diisi')}</div>", unsafe_allow_html=True)
+    st.image("profile_photo.jpg", use_container_width=True)
+    st.markdown(f"<div class='custom-title'>{sheet_data.get('nama', 'Nama Belum Diisi')}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='custom-desc'>{sheet_data.get('deskripsi', 'Deskripsi belum diisi')}</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='section-title'>🛠 Keahlian</div>", unsafe_allow_html=True)
-    for skill in data["skills"]:
-        if ":" in skill:
-            nama, nilai = skill.split(":")
-            st.markdown(f"<div class='skill-name'>{nama.strip()} ({nilai.strip()}%)</div>", unsafe_allow_html=True)
-            try:
-                st.progress(int(nilai.strip()))
-            except:
-                st.write(f"(Format salah: {skill})")
-
-    st.markdown("<div class='section-title'>💼 Pengalaman</div>", unsafe_allow_html=True)
-    for exp in data["pengalaman"]:
-        st.markdown(f"<div class='pengalaman-text'><strong>{exp['judul']} ({exp['tahun']})</strong><br>{exp['deskripsi']}</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='section-title'>📁 Portofolio Proyek</div>", unsafe_allow_html=True)
-    for proj in data.get("projects", []):
-        st.image(proj["gambar"], use_column_width=True)
-        st.markdown(f"<div class='pengalaman-text'><strong>{proj['judul']} ({proj['tahun']})</strong></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='project-desc'>{proj['deskripsi']}</div>", unsafe_allow_html=True)
-        if proj.get("link"):
-            st.markdown(f"[Lihat Proyek]({proj['link']})", unsafe_allow_html=True)
+    for section, title in zip(["Skills", "Pengalaman", "Proyek"], ["🚀 Skills", "💼 Pengalaman", "📁 Proyek"]):
+        df = load_table(section)
+        if not df.empty:
+            st.markdown(f"<div class='section-title'>{title}</div>", unsafe_allow_html=True)
+            for i, row in df.iterrows():
+                st.markdown(f"<div class='section-entry'><b>{row[0]}</b><br>{row[1]}</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='section-title'>📞 Hubungi Saya</div>", unsafe_allow_html=True)
     st.markdown("<div class='hubungi'><a href='https://wa.me/6287810059643' target='_blank'>WhatsApp</a></div>", unsafe_allow_html=True)
@@ -143,105 +142,48 @@ if mode == "Tampilan Publik":
         if submit and nama_pengirim and isi_pesan:
             try:
                 simpan_ke_google_sheet(nama_pengirim, email_pengirim, isi_pesan)
-                st.success("Pesan berhasil dikirim dan disimpan ke Google Sheets!")
+                st.success("Pesan berhasil dikirim!")
             except Exception as e:
-                st.error(f"Gagal menyimpan ke Google Sheets: {e}")
-    
+                st.error(f"Gagal menyimpan pesan: {e}")
+
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ==========================
-# ========== MODE ADMIN ==========
-# ==========================
 elif mode == "Edit (Admin)":
     st.title("Mode Edit Portofolio")
+    st.markdown("<div style='color:white;background-color:#1E90FF;padding:0.5rem;border-radius:5px;font-weight:bold;'>Admin Mode Aktif</div>", unsafe_allow_html=True)
     password = st.text_input("Masukkan Password Admin", type="password")
     if password != "admin123":
         st.warning("Masukkan password untuk mengakses mode edit.")
         st.stop()
 
-    with st.expander("Profil dan Identitas", expanded=True):
-        nama = st.text_input("Nama", value=data["profile"].get("nama", ""))
-        deskripsi = st.text_area("Deskripsi", value=data["profile"].get("deskripsi", ""))
-        alamat = st.text_input("Alamat", value=data["profile"].get("alamat", ""))
-        jenis_kelamin = st.selectbox("Jenis Kelamin", ["Laki-laki", "Perempuan"], 
-                                     index=0 if data["profile"].get("jenis_kelamin") == "Laki-laki" else 1)
-        agama = st.text_input("Agama", value=data["profile"].get("agama", ""))
-        tanggal_lahir = st.date_input("Tanggal Lahir")
-        instagram = st.text_input("Instagram", value=data["profile"].get("instagram", ""))
-        linkedin = st.text_input("LinkedIn", value=data["profile"].get("linkedin", ""))
-        github = st.text_input("GitHub", value=data["profile"].get("github", ""))
+    with st.form("form_edit"):
+        nama = st.text_input("Nama", value=sheet_data.get("nama", ""))
+        deskripsi = st.text_area("Deskripsi", value=sheet_data.get("deskripsi", ""))
+        simpan = st.form_submit_button("Simpan Perubahan")
+        if simpan:
+            sheet_data["nama"] = nama
+            sheet_data["deskripsi"] = deskripsi
+            try:
+                save_data(sheet_data)
+                st.success("Data berhasil disimpan ke Google Sheets!")
+            except Exception as e:
+                st.error(f"Gagal menyimpan data: {e}")
 
-    with st.expander("Foto Profil"):
-        foto = st.file_uploader("Upload Gambar", type=["jpg", "jpeg", "png"])
-        if foto is not None:
-            with open("profile_photo.jpg", "wb") as f:
-                f.write(foto.read())
-            st.success("Foto berhasil disimpan.")
+    for section in ["Skills", "Pengalaman", "Proyek"]:
+        st.subheader(f"Edit {section}")
+        df = load_table(section)
+        edited_df = st.experimental_data_editor(df, num_rows="dynamic", use_container_width=True)
+        if st.button(f"Simpan {section}"):
+            try:
+                save_table(section, edited_df)
+                st.success(f"{section} berhasil disimpan!")
+            except Exception as e:
+                st.error(f"Gagal menyimpan {section}: {e}")
 
-    with st.expander("Keahlian"):
-        if "skill_data" not in st.session_state:
-            st.session_state.skill_data = data["skills"] if data["skills"] else []
-
-        new_skills = []
-        remove_indexes = []
-
-        for i, skill in enumerate(st.session_state.skill_data):
-            nama_skill, nilai = skill.split(":") if ":" in skill else (skill, "50")
-            input_nama = st.text_input(f"Nama Keahlian {i+1}", value=nama_skill.strip(), key=f"skill_nama_{i}")
-            input_nilai = st.slider(f"Skor (%) {i+1}", 0, 100, int(nilai.strip()), key=f"skill_nilai_{i}")
-            if st.button("Hapus Keahlian", key=f"hapus_{i}"):
-                remove_indexes.append(i)
-            new_skills.append(f"{input_nama}: {input_nilai}")
-
-        for idx in sorted(remove_indexes, reverse=True):
-            new_skills.pop(idx)
-
-        if st.button("Tambah Keahlian Baru"):
-            new_skills.append("Keahlian Baru: 50")
-            st.session_state.skill_data = new_skills
-            st.rerun()
-
-        st.session_state.skill_data = new_skills
-
-    with st.expander("Pengalaman"):
-        new_judul = st.text_input("Judul Pengalaman")
-        new_tahun = st.text_input("Tahun")
-        new_desc = st.text_area("Deskripsi Pengalaman")
-        if st.button("Tambah Pengalaman"):
-            if new_judul and new_tahun:
-                data["pengalaman"].append({
-                    "judul": new_judul,
-                    "tahun": new_tahun,
-                    "deskripsi": new_desc
-                })
-                st.success("Pengalaman ditambahkan!")
-
-    with st.expander("Proyek Portofolio"):
-        proj_judul = st.text_input("Judul Proyek")
-        proj_tahun = st.text_input("Tahun Proyek")
-        proj_desc = st.text_area("Deskripsi Proyek")
-        proj_link = st.text_input("Link Proyek")
-        proj_gambar = st.text_input("Link Gambar (URL)")
-        if st.button("Tambah Proyek"):
-            data["projects"].append({
-                "judul": proj_judul,
-                "tahun": proj_tahun,
-                "deskripsi": proj_desc,
-                "link": proj_link,
-                "gambar": proj_gambar
-            })
-            st.success("Proyek ditambahkan!")
-
-    with st.expander("Pesan dari Pengunjung", expanded=False):
-         st.write("Berikut adalah pesan yang dikirim oleh pengunjung:")
-
+    st.subheader("Pesan dari Pengunjung")
     try:
-        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
-        client = gspread.authorize(creds)
-        sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
-        records = sheet.get_all_records()
-
+        sheet_pesan = connect_sheet("Pesan Pengunjung")
+        records = sheet_pesan.get_all_records()
         if records:
             df_pesan = pd.DataFrame(records)
             st.dataframe(df_pesan)
@@ -249,19 +191,3 @@ elif mode == "Edit (Admin)":
             st.info("Belum ada pesan masuk.")
     except Exception as e:
         st.error(f"Gagal memuat pesan: {e}")
-        
-    if st.button("Simpan Semua Perubahan"):
-        data["profile"]["nama"] = nama
-        data["profile"]["deskripsi"] = deskripsi
-        data["skills"] = new_skills
-        data["Identitas"] = {
-            "alamat": alamat,
-            "jenis_kelamin": jenis_kelamin,
-            "agama": agama,
-            "tanggal_lahir": str(tanggal_lahir),
-            "instagram": instagram,
-            "linkedin": linkedin,
-            "github": github
-        }
-        save_data(data)
-        st.success("Data berhasil disimpan!")
