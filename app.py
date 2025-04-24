@@ -5,6 +5,7 @@ from datetime import datetime
 import pandas as pd
 
 st.set_page_config(page_title="Portofolio", layout="centered")
+
 # Koneksi Google Sheets
 def connect_sheet(sheet_name):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
@@ -12,7 +13,14 @@ def connect_sheet(sheet_name):
     client = gspread.authorize(creds)
     return client.open("Data Portofolio").worksheet(sheet_name)
 
-# Load data dari Google Sheets
+# Inisialisasi header jika sheet kosong
+def init_table_if_empty(sheet_name, headers):
+    sheet = connect_sheet(sheet_name)
+    values = sheet.get_all_values()
+    if not values:
+        sheet.append_row(headers)
+
+# Load data profil dari Google Sheets
 def load_data():
     try:
         sheet = connect_sheet("Data")
@@ -24,7 +32,7 @@ def load_data():
     except:
         return {}
 
-# Simpan data ke Google Sheets
+# Simpan data profil ke Google Sheets
 def save_data(data):
     sheet = connect_sheet("Data")
     sheet.clear()
@@ -33,8 +41,7 @@ def save_data(data):
     sheet.append_row(headers)
     sheet.append_row(values)
 
-# Simpan Pesan
-
+# Simpan pesan ke Google Sheets
 def simpan_ke_google_sheet(nama, email, pesan):
     sheet = connect_sheet("Pesan Pengunjung")
     values = sheet.get_all_values()
@@ -63,6 +70,11 @@ st.sidebar.title("Mode")
 mode = st.sidebar.radio("Pilih mode:", ["Tampilan Publik", "Edit (Admin)"])
 
 if mode == "Tampilan Publik":
+    # Inisialisasi jika kosong
+    init_table_if_empty("Skills", ["Skill", "Keterangan"])
+    init_table_if_empty("Pengalaman", ["Judul", "Deskripsi"])
+    init_table_if_empty("Proyek", ["Nama Proyek", "Detail"])
+
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
@@ -168,7 +180,11 @@ elif mode == "Edit (Admin)":
             except Exception as e:
                 st.error(f"Gagal menyimpan data: {e}")
 
-    for section in ["Skills", "Pengalaman", "Proyek"]:
+    for section, headers in zip(
+        ["Skills", "Pengalaman", "Proyek"],
+        [["Skill", "Keterangan"], ["Judul", "Deskripsi"], ["Nama Proyek", "Detail"]]
+    ):
+        init_table_if_empty(section, headers)
         st.subheader(f"Edit {section}")
         df = load_table(section)
         edited_df = st.experimental_data_editor(df, num_rows="dynamic", use_container_width=True)
