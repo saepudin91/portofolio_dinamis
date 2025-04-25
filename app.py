@@ -13,4 +13,9 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(
 client = gspread.authorize(creds)
 
 # Buka spreadsheet
-sheet = client.open("Nama Spreadsheet Kamu").worksheet("Nama Sheet")
+sheet = client.open("Data Portofolio").worksheet("Pesan Pengunjung")
+try:
+    sheet = client.open("Nama Spreadsheet Kamu").worksheet("Nama Sheet")
+    st.success("Berhasil konek ke Google Sheets!")
+except Exception as e:
+    st.error(f"Error konek ke Google Sheets: {e}")
