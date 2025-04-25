@@ -3,58 +3,48 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import pandas as pd
+import os
 
 st.set_page_config(page_title="Portofolio", layout="centered")
 
-# Koneksi Google Sheets
+# Koneksi ke Google Sheets
 def connect_sheet(sheet_name):
     scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = ServiceAccountCredentials.from_json_keyfile_dict(dict(st.secrets["gcp_service_account"]), scope)
     client = gspread.authorize(creds)
     return client.open("Data Portofolio").worksheet(sheet_name)
 
-# Inisialisasi header jika sheet kosong
 def init_table_if_empty(sheet_name, headers):
     sheet = connect_sheet(sheet_name)
-    values = sheet.get_all_values()
-    if not values:
+    if not sheet.get_all_values():
         sheet.append_row(headers)
 
-# Load data profil dari Google Sheets
+# Load dan simpan data profil
 def load_data():
     try:
         sheet = connect_sheet("Data")
         rows = sheet.get_all_records()
-        if rows:
-            return rows[0]
-        else:
-            return {}
+        return rows[0] if rows else {}
     except:
         return {}
 
-# Simpan data profil ke Google Sheets
 def save_data(data):
     sheet = connect_sheet("Data")
     sheet.clear()
-    headers = list(data.keys())
-    values = list(data.values())
-    sheet.append_row(headers)
-    sheet.append_row(values)
+    sheet.append_row(list(data.keys()))
+    sheet.append_row(list(data.values()))
 
-# Simpan pesan ke Google Sheets
+# Simpan pesan dari pengunjung
 def simpan_ke_google_sheet(nama, email, pesan):
     sheet = connect_sheet("Pesan Pengunjung")
-    values = sheet.get_all_values()
-    if not values or values[0] != ["Waktu", "Nama", "Email", "Pesan"]:
+    if not sheet.get_all_values():
         sheet.insert_row(["Waktu", "Nama", "Email", "Pesan"], 1)
     waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sheet.append_row([waktu, nama, email, pesan])
 
-# Fungsi umum untuk data tabel (skills, pengalaman, proyek)
+# Fungsi umum tabel
 def load_table(sheet_name):
-    sheet = connect_sheet(sheet_name)
-    records = sheet.get_all_records()
-    return pd.DataFrame(records)
+    return pd.DataFrame(connect_sheet(sheet_name).get_all_records())
 
 def save_table(sheet_name, df):
     sheet = connect_sheet(sheet_name)
@@ -63,14 +53,15 @@ def save_table(sheet_name, df):
     for _, row in df.iterrows():
         sheet.append_row(row.tolist())
 
+# Load data awal
 sheet_data = load_data()
 
-# Sidebar
+# Sidebar mode
 st.sidebar.title("Mode")
 mode = st.sidebar.radio("Pilih mode:", ["Tampilan Publik", "Edit (Admin)"])
 
+# Tampilan Publik
 if mode == "Tampilan Publik":
-    # Inisialisasi jika kosong
     init_table_if_empty("Skills", ["Skill", "Keterangan"])
     init_table_if_empty("Pengalaman", ["Judul", "Deskripsi"])
     init_table_if_empty("Proyek", ["Nama Proyek", "Detail"])
@@ -116,21 +107,13 @@ if mode == "Tampilan Publik":
             text-align: center;
             margin-top: 2rem;
         }
-        @media (min-width: 768px) {
-            .custom-title { font-size: 2.5vw; }
-            .custom-desc { font-size: 1.5vw; }
-            .section-title { font-size: 1.8vw; }
-        }
-        @media (max-width: 480px) {
-            .custom-title { font-size: 7vw; }
-            .custom-desc { font-size: 4.5vw; }
-            .section-title { font-size: 5vw; }
-        }
         </style>
         <div class="container-publik">
     """, unsafe_allow_html=True)
 
-    st.image("profile_photo.jpg", use_container_width=True)
+    if os.path.exists("profile_photo.jpg"):
+        st.image("profile_photo.jpg", use_container_width=True)
+
     st.markdown(f"<div class='custom-title'>{sheet_data.get('nama', 'Nama Belum Diisi')}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='custom-desc'>{sheet_data.get('deskripsi', 'Deskripsi belum diisi')}</div>", unsafe_allow_html=True)
 
@@ -156,15 +139,16 @@ if mode == "Tampilan Publik":
                 st.success("Pesan berhasil dikirim!")
             except Exception as e:
                 st.error(f"Gagal menyimpan pesan: {e}")
-
     st.markdown("</div>", unsafe_allow_html=True)
 
+# Mode Admin
 elif mode == "Edit (Admin)":
     st.title("Mode Edit Portofolio")
     st.markdown("<div style='color:white;background-color:#1E90FF;padding:0.5rem;border-radius:5px;font-weight:bold;'>Admin Mode Aktif</div>", unsafe_allow_html=True)
+    
     password = st.text_input("Masukkan Password Admin", type="password")
     if password != "admin123":
-        st.warning("Masukkan password untuk mengakses mode edit.")
+        st.warning("Masukkan password yang benar untuk akses.")
         st.stop()
 
     with st.form("form_edit"):
@@ -200,8 +184,7 @@ elif mode == "Edit (Admin)":
         sheet_pesan = connect_sheet("Pesan Pengunjung")
         records = sheet_pesan.get_all_records()
         if records:
-            df_pesan = pd.DataFrame(records)
-            st.dataframe(df_pesan)
+            st.dataframe(pd.DataFrame(records))
         else:
             st.info("Belum ada pesan masuk.")
     except Exception as e:
