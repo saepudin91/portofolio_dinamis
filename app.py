@@ -1,18 +1,14 @@
-import os
-import json
+import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import json
 
-# Ambil JSON dari secrets
-gcp_json = os.environ.get("GCP_SERVICE_ACCOUNT")
-service_account_info = json.loads(gcp_json)
+# Load dari secrets
+gcp_info = st.secrets["gcp_service_account"]
+gcp_info = {k: v for k, v in gcp_info.items()}
+gcp_info["private_key"] = gcp_info["private_key"].replace("\\n", "\n")  # safety
 
-# Buat credentials
+# Setup credentials dan client
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(gcp_info, scope)
 client = gspread.authorize(creds)
-
-# Test koneksi
-spreadsheet = client.open("Data Portofolio")
-worksheet = spreadsheet.sheet1
-print("Isi A1:", worksheet.acell("A1").value)
